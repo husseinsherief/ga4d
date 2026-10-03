@@ -534,55 +534,50 @@ implementation. Running it produces:
 \end{itemize}
 
 % ============================================================
-% Figure 1: Stability window h_stable(theta)
+% Figure 1: spectral radius of the alternating monodromy
 % ============================================================
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.78\textwidth]{Fig1.png}
-    \caption{Stability window $h_{\mathrm{stable}}(\theta)$ for the
-    rotated two-block field $R(\theta) A \tilde{R}(\theta)$ with
-    $A = \operatorname{diag}(-1,-2)$. The dashed line marks the
-    uncoupled bound $h = 1$; the dotted vertical line marks the
-    angle of maximum stability $\theta^{*} = \arccos(2\sqrt{2}/3)
-    \approx 0.3398$, where $h_{\mathrm{stable}} = \sqrt{2}$. The
-    window is non-monotonic: it grows from the uncoupled bound at
-    $\theta = 0$ to its peak at $\theta^{*}$, then decreases
-    continuously to zero at the permutation limit $\theta = \pi/2$.}
-    \label{fig:hstable}
+    \caption{Spectral radius $\rho(\mathbf{M}_2)$ of the period-two
+    monodromy matrix for the alternating schedule $s_{2m}=0$,
+    $s_{2m+1}=1$, with $\mathbf{A}=\operatorname{diag}(-1,-2)$ and
+    $\mathbf{P}$ the transposition. The dashed line marks the
+    stability boundary $\rho=1$; the dotted vertical line marks the
+    uncoupled bound $h=1$. The scheme is stable for $0<h<1$ and
+    marginally stable at $h=1$.}
+    \label{fig:rhoM2}
 \end{figure}
 
 % ============================================================
-% Figure 2: Trajectory norms at h = 0.5
+% Figure 2: trajectory norms for the three schedules
 % ============================================================
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.78\textwidth]{Fig2.png}
-    \caption{Trajectory norm $\|x_k\|$ versus step index $k$ at
-    $h = 0.5$ for the frozen-$\theta$ forward Euler maps at
-    $\theta = 0$ (uncoupled), $\theta = \theta^{*}$ (rotation peak),
-    and $\theta = \pi/2$ (permutation limit). The permutation limit
-    diverges exponentially, while the uncoupled and rotation-peak
-    trajectories remain bounded. The rotation-peak trajectory
-    decays more slowly than the uncoupled one, consistent with the
-    larger stability window $h_{\mathrm{stable}}(\theta^{*}) =
-    \sqrt{2}$ recorded in Table~\ref{tab:hstable}.}
+    \caption{Trajectory norm $\|\mathbf{x}_k\|$ versus step index $k$
+    at $h=0.5$ for the uncoupled ($s_k\equiv 0$), fully coupled
+    ($s_k\equiv 1$), and alternating ($s_k = k \bmod 2$) schedules,
+    with $\mathbf{A}=\operatorname{diag}(-1,-2)$ and $\mathbf{P}$ the
+    transposition. The fully coupled schedule diverges even at this
+    moderate step size, while the uncoupled and alternating schedules
+    remain bounded.}
     \label{fig:trajectories}
 \end{figure}
 
 % ============================================================
-% Figure 3: Verification scatter (analytical vs numerical)
+% Figure 3: verification scatter
 % ============================================================
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.78\textwidth]{Fig3.png}
-    \caption{Verification scatter: the analytical stability window
-    $h_{\mathrm{stable}}(\theta)$ from equation~\eqref{eq:hstable}
-    (red curve) against the boundary located by direct numerical
-    bisection on the spectral radius $\rho(I + h R(\theta) A
-    \tilde{R}(\theta)) = 1$ (blue dots). The dashed horizontal
-    line marks the uncoupled bound $h = 1$. The two agree to
-    numerical precision across the full range
-    $0 \le \theta < \pi/2$.}
+    \caption{Verification scatter: the analytical spectral radius
+    $\rho(\mathbf{M}_2)$ from
+    Equations~\eqref{eq:M2}--\eqref{eq:M2invariants} (red curve)
+    against the values obtained by direct eigenvalue computation
+    (blue dots). The dashed horizontal line marks $\rho=1$. The two
+    agree to four decimal places across the full range
+    $0<h<1.4$.}
     \label{fig:verification}
 \end{figure}
 
