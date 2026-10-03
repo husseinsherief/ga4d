@@ -1,0 +1,727 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Euler-Lagrange Particle and Field Demo Documentation</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #080b10;
+      --panel: #111722;
+      --text: #e8edf4;
+      --muted: #aab5c4;
+      --line: #263241;
+      --blue: #5fa8ff;
+      --green: #68f28a;
+      --orange: #ff9b32;
+      --violet: #df7dff;
+      --red: #ff5966;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 16px/1.55 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    main {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 32px 20px 56px;
+    }
+
+    h1, h2, h3 {
+      line-height: 1.2;
+      margin: 0 0 12px;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 4vw, 3.2rem);
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid var(--line);
+      font-size: 1.45rem;
+    }
+
+    h3 {
+      margin-top: 20px;
+      font-size: 1.08rem;
+    }
+
+    p {
+      margin: 0 0 14px;
+    }
+
+    code, pre {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    }
+
+    code {
+      color: #f5d184;
+    }
+
+    pre {
+      margin: 12px 0 18px;
+      padding: 14px 16px;
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #05080d;
+      color: #dbe7ff;
+    }
+
+    ul {
+      margin: 8px 0 16px;
+      padding-left: 24px;
+    }
+
+    li {
+      margin: 7px 0;
+    }
+
+    .lead {
+      color: var(--muted);
+      font-size: 1.08rem;
+      max-width: 850px;
+    }
+
+    .card {
+      margin: 18px 0;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 14px;
+      margin: 18px 0;
+    }
+
+    .tag {
+      display: inline-block;
+      margin: 0 6px 6px 0;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .blue { color: var(--blue); }
+    .green { color: var(--green); }
+    .orange { color: var(--orange); }
+    .violet { color: var(--violet); }
+    .red { color: var(--red); }
+
+    .equation {
+      margin: 12px 0 16px;
+      padding: 12px 14px;
+      border-left: 3px solid var(--blue);
+      background: #0b111a;
+      overflow-x: auto;
+    }
+
+    .equation math {
+      display: block;
+      min-width: max-content;
+      font-size: 1.18rem;
+    }
+
+    .note {
+      color: var(--muted);
+      border-left-color: var(--orange);
+    }
+
+    table {
+      width: 100%;
+      margin: 14px 0 22px;
+      border-collapse: collapse;
+      border: 1px solid var(--line);
+      background: #0b111a;
+    }
+
+    th, td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      color: #f2f6ff;
+      background: #141c29;
+      font-weight: 650;
+    }
+
+    td {
+      color: var(--muted);
+    }
+
+    td:first-child {
+      color: var(--text);
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Euler-Lagrange Particle and Field Demo</h1>
+    <p class="lead">
+      This document describes <code>euler-lagrange-particle-field-gpu.py</code>, a Python and
+      OpenGL program that compares the Euler-Lagrange equation in ordinary
+      particle mechanics with its field-theory version.
+    </p>
+
+    <h2>How To Run</h2>
+    <p>From the project directory, run:</p>
+    <pre><code>python euler-lagrange-particle-field-gpu.py</code></pre>
+    <p>
+      If you are running inside a virtualenv, you may need to activate it first.
+    </p>
+
+    <h2>Main Idea</h2>
+    <p>
+      The program is built around one main idea:
+      The Lagrangian is the thing being integrated. The Euler-Lagrange equation is
+      what you get after asking for the action to be stationary.
+    </p>
+
+    <div class="equation">
+      <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+        <mrow>
+          <mi>S</mi>
+          <mo>=</mo>
+          <mo>&Integral;</mo>
+          <mi>L</mi>
+          <mo>(</mo>
+          <mi>q</mi>
+          <mo>,</mo>
+          <mover><mi>q</mi><mo>.</mo></mover>
+          <mo>)</mo>
+          <mi>d</mi><mi>t</mi>
+        </mrow>
+      </math>
+    </div>
+
+    <div class="equation">
+      <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+        <mrow>
+          <mi>S</mi>
+          <mo>=</mo>
+          <mo>&Integral;</mo>
+          <mi mathvariant="script">L</mi>
+          <mo>(</mo>
+          <mi>&psi;</mi>
+          <mo>,</mo>
+          <msub><mo>&PartialD;</mo><mi>&mu;</mi></msub>
+          <mi>&psi;</mi>
+          <mo>)</mo>
+          <msup><mi>d</mi><mn>4</mn></msup><mi>x</mi>
+        </mrow>
+      </math>
+    </div>
+
+    <p>
+      For a particle, the dynamical variable is a coordinate <code>q(t)</code>. For a field,
+      the dynamical variable is a value at every spatial point, such as
+      <code>psi(t, x)</code> in the demo.
+    </p>
+
+    <h2>Euler-Lagrange Equation Method</h2>
+    <p>
+      The Euler-Lagrange equation is for turning an action into an equation of
+      motion. The motion where tiny changes to that path do not change the action to first
+      order is modeled. In other words,
+    </p>
+
+    <div class="equation">
+      <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+        <mrow>
+          <mi>&delta;</mi><mi>S</mi>
+          <mo>&ne;</mo>
+          <mn>0</mn>
+        </mrow>
+      </math>
+    </div>
+
+    <ol>
+      <li>Choose the object that is allowed to vary: <code>x(t)</code> for a particle or <code>psi(t, x)</code> for a field.</li>
+      <li>Integrate the Lagrangian or Lagrangian density.</li>
+      <li>Perturb the object slightly and keep only the first-order change in the action.</li>
+      <li>Use integration by parts to move derivatives away from the arbitrary perturbation.</li>
+      <li>Because the perturbation is arbitrary, the factor multiplying it must be zero. That factor is the Euler-Lagrange equation.</li>
+    </ol>
+
+    <p>
+      The key idea is that the Lagrangian is the input expression. The Euler-Lagrange
+      equation is the derivative condition produced from that expression.
+    </p>
+
+    <h2>Parameters Used By The Graphs</h2>
+    <p>
+      These are the quantities that control the curves in the dashboard. Some are selected
+      by the preset menu and some are fixed inside the program.
+    </p>
+
+    <h3>Global Simulation Parameters</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Parameter</th>
+          <th>Meaning</th>
+          <th>Where It Appears</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>t</code></td>
+          <td>Simulation time. The slider and Play button move through this array.</td>
+          <td>X-axis for the particle integrand and particle Euler-Lagrange plots.</td>
+        </tr>
+        <tr>
+          <td><code>dt</code></td>
+          <td>Time step between simulation frames. In the current program it is fixed at <code>0.012</code>.</td>
+          <td>Controls how finely the motion and field evolution are sampled.</td>
+        </tr>
+        <tr>
+          <td><code>n_steps</code></td>
+          <td>Total number of simulated time samples. In the current program it is fixed at <code>1800</code>.</td>
+          <td>Controls the length of the plotted time interval.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Particle Parameters</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Parameter</th>
+          <th>Meaning</th>
+          <th>Effect On The Graphs</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>m</code></td>
+          <td>Particle mass.</td>
+          <td>Changes the oscillator frequency and the value of the <code>m a</code> curve.</td>
+        </tr>
+        <tr>
+          <td><code>k</code></td>
+          <td>Spring stiffness in the potential <code>V = 1/2 k x^2</code>.</td>
+          <td>Changes the restoring force <code>F = -k x</code> and the potential energy curve.</td>
+        </tr>
+        <tr>
+          <td><code>x0</code></td>
+          <td>Initial particle displacement. In the current program it is fixed at <code>1.0</code>.</td>
+          <td>Sets the starting spring stretch and initial potential energy.</td>
+        </tr>
+        <tr>
+          <td><code>v0</code></td>
+          <td>Initial particle velocity. In the current program it is fixed at <code>0.0</code>.</td>
+          <td>Sets the starting kinetic energy.</td>
+        </tr>
+        <tr>
+          <td><code>omega</code></td>
+          <td>Natural angular frequency, computed from <code>sqrt(k / m)</code>.</td>
+          <td>Controls how fast the particle oscillates.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Field Parameters</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Parameter</th>
+          <th>Meaning</th>
+          <th>Effect On The Graphs</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>x_grid</code></td>
+          <td>The spatial sample points for the field. The program uses points from <code>-2</code> to <code>2</code>.</td>
+          <td>X-axis for the field density plot and field Euler-Lagrange terms plot.</td>
+        </tr>
+        <tr>
+          <td><code>dx</code></td>
+          <td>Distance between neighboring spatial grid points.</td>
+          <td>Used to approximate the spatial derivative <code>psi_x</code> and second derivative <code>psi_xx</code>.</td>
+        </tr>
+        <tr>
+          <td><code>c</code></td>
+          <td>Wave speed parameter.</td>
+          <td>Controls how strongly neighboring field points pull on each other through <code>c^2 psi_xx</code>.</td>
+        </tr>
+        <tr>
+          <td><code>mu</code></td>
+          <td>Field mass parameter.</td>
+          <td>Adds the local restoring term <code>-mu^2 psi</code>; larger values pull the field back toward zero more strongly.</td>
+        </tr>
+        <tr>
+          <td><code>psi(t, x)</code></td>
+          <td>The field value at time <code>t</code> and position <code>x</code>.</td>
+          <td>The main curve in the 3D field view.</td>
+        </tr>
+        <tr>
+          <td><code>psi_t</code></td>
+          <td>Time derivative of the field.</td>
+          <td>Contributes to the positive kinetic part of both Lagrangian density and energy density.</td>
+        </tr>
+        <tr>
+          <td><code>psi_x</code></td>
+          <td>Spatial derivative of the field.</td>
+          <td>Measures how sharply the field bends across space; appears as a negative term in Lagrangian density and positive term in energy density.</td>
+        </tr>
+        <tr>
+          <td><code>psi_tt</code></td>
+          <td>Second time derivative of the field.</td>
+          <td>Left side of the field Euler-Lagrange equation plot.</td>
+        </tr>
+        <tr>
+          <td><code>psi_xx</code></td>
+          <td>Second spatial derivative of the field.</td>
+          <td>Part of the right side <code>c^2 psi_xx - mu^2 psi</code>.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>Particle Mechanics Side</h2>
+    <p>
+      The particle side uses a one-dimensional harmonic oscillator:
+    </p>
+
+    <div class="equation">
+      <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+        <mrow>
+          <mi>L</mi>
+          <mo>=</mo>
+          <mi>T</mi>
+          <mo>-</mo>
+          <mi>V</mi>
+          <mo>=</mo>
+          <mfrac><mn>1</mn><mn>2</mn></mfrac>
+          <mi>m</mi><msup><mi>v</mi><mn>2</mn></msup>
+          <mo>-</mo>
+          <mfrac><mn>1</mn><mn>2</mn></mfrac>
+          <mi>k</mi><msup><mi>x</mi><mn>2</mn></msup>
+        </mrow>
+      </math>
+    </div>
+
+    <p>
+      The Euler-Lagrange equation is:
+    </p>
+
+    <div class="equation">
+      <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+        <mrow>
+          <mfrac><mi>d</mi><mrow><mi>d</mi><mi>t</mi></mrow></mfrac>
+          <mo>(</mo>
+          <mfrac>
+            <mrow><mo>&PartialD;</mo><mi>L</mi></mrow>
+            <mrow><mo>&PartialD;</mo><mi>v</mi></mrow>
+          </mfrac>
+          <mo>)</mo>
+          <mo>-</mo>
+          <mfrac>
+            <mrow><mo>&PartialD;</mo><mi>L</mi></mrow>
+            <mrow><mo>&PartialD;</mo><mi>x</mi></mrow>
+          </mfrac>
+          <mo>=</mo>
+          <mn>0</mn>
+        </mrow>
+      </math>
+    </div>
+
+    <p>
+      Since <code>partial L / partial v = m v</code>, the first term becomes
+      <code>m a</code>. Since <code>partial L / partial x = -k x</code>, the second term is
+      the force from the spring. The result is Newton's law:
+    </p>
+
+    <div class="equation">
+      <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+        <mrow>
+          <mi>m</mi><mi>a</mi>
+          <mo>=</mo>
+          <mi>F</mi>
+        </mrow>
+      </math>
+    </div>
+
+    <h3>Particle Panels</h3>
+    <ul>
+      <li><span class="blue">3D particle view:</span> shows the mass, spring, force arrow, and <code>m a</code> arrow.</li>
+      <li><span class="violet">Particle integrand plot:</span> shows <code>T</code>, <code>V</code>, and <code>L = T - V</code>.</li>
+      <li><span class="green">Particle EL terms plot:</span> compares <code>m a</code> and force directly.</li>
+      <li><span class="red">Residual:</span> shows <code>m a - F</code>, which should remain near zero.</li>
+    </ul>
+
+    <h3>Particle Graph Formulas</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Graph</th>
+          <th>Inputs</th>
+          <th>Curves Shown</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Particle integrand</td>
+          <td><code>t</code>, <code>x(t)</code>, <code>v(t)</code>, <code>m</code>, <code>k</code></td>
+          <td><code>T = 1/2 m v^2</code>, <code>V = 1/2 k x^2</code>, and <code>L = T - V</code>.</td>
+        </tr>
+        <tr>
+          <td>Particle EL terms</td>
+          <td><code>x(t)</code>, <code>a(t)</code>, <code>m</code>, <code>k</code></td>
+          <td><code>m a</code>, <code>F = -k x</code>, and the residual <code>m a - F</code>.</td>
+        </tr>
+        <tr>
+          <td>3D particle view</td>
+          <td><code>x(t)</code>, <code>F(t)</code>, <code>m a(t)</code></td>
+          <td>The spring stretch, the force arrow, and the <code>m a</code> arrow.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="card note">
+      The important point is that <code>L = T - V</code> is the input to the variational
+      problem. The Euler-Lagrange equation differentiates that input into the actual
+      equation of motion.
+    </div>
+
+    <h2>Field Theory Side</h2>
+    <p>
+      The field side uses a one-dimensional scalar field <code>psi(t, x)</code>. This is a
+      simplified visual stand-in for a full spacetime field <code>psi(t, x, y, z)</code>.
+    </p>
+
+    <div class="equation">
+      <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+        <mrow>
+          <mi mathvariant="script">L</mi>
+          <mo>=</mo>
+          <mfrac><mn>1</mn><mn>2</mn></mfrac>
+          <msubsup><mi>&psi;</mi><mi>t</mi><mn>2</mn></msubsup>
+          <mo>-</mo>
+          <mfrac><mn>1</mn><mn>2</mn></mfrac>
+          <msup><mi>c</mi><mn>2</mn></msup>
+          <msubsup><mi>&psi;</mi><mi>x</mi><mn>2</mn></msubsup>
+          <mo>-</mo>
+          <mfrac><mn>1</mn><mn>2</mn></mfrac>
+          <msup><mi>&mu;</mi><mn>2</mn></msup>
+          <msup><mi>&psi;</mi><mn>2</mn></msup>
+        </mrow>
+      </math>
+    </div>
+
+    <p>
+      Here <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi mathvariant="script">L</mi></math>
+      is a Lagrangian density. It is local: every spatial point
+      has its own contribution. Integrating it over space gives an ordinary time-dependent
+      Lagrangian:
+    </p>
+
+    <div class="equation">
+      <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+        <mrow>
+          <mi>L</mi><mo>(</mo><mi>t</mi><mo>)</mo>
+          <mo>=</mo>
+          <mo>&Integral;</mo>
+          <mi mathvariant="script">L</mi>
+          <mo>(</mo><mi>t</mi><mo>,</mo><mi>x</mi><mo>)</mo>
+          <mi>d</mi><mi>x</mi>
+        </mrow>
+      </math>
+    </div>
+
+    <p>
+      Then integrating over time gives the action:
+    </p>
+
+    <div class="equation">
+      <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+        <mrow>
+          <mi>S</mi>
+          <mo>=</mo>
+          <mo>&Integral;</mo>
+          <mi>L</mi><mo>(</mo><mi>t</mi><mo>)</mo>
+          <mi>d</mi><mi>t</mi>
+          <mo>=</mo>
+          <mo>&Integral;</mo><mo>&Integral;</mo>
+          <mi mathvariant="script">L</mi>
+          <mo>(</mo><mi>t</mi><mo>,</mo><mi>x</mi><mo>)</mo>
+          <mi>d</mi><mi>x</mi>
+          <mi>d</mi><mi>t</mi>
+        </mrow>
+      </math>
+    </div>
+
+    <p>
+      In full 3+1 dimensional field theory, the notation <code>d^4x</code> means:
+    </p>
+
+    <div class="equation">
+      <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+        <mrow>
+          <msup><mi>d</mi><mn>4</mn></msup><mi>x</mi>
+          <mo>=</mo>
+          <mi>d</mi><mi>t</mi>
+          <mi>d</mi><mi>x</mi>
+          <mi>d</mi><mi>y</mi>
+          <mi>d</mi><mi>z</mi>
+        </mrow>
+      </math>
+    </div>
+
+    <h3>Field Euler-Lagrange Equation</h3>
+    <p>
+      The field-theory Euler-Lagrange equation is:
+    </p>
+
+    <div class="equation">
+      <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+        <mrow>
+          <msub><mo>&PartialD;</mo><mi>&mu;</mi></msub>
+          <mo>(</mo>
+          <mfrac>
+            <mrow><mo>&PartialD;</mo><mi mathvariant="script">L</mi></mrow>
+            <mrow>
+              <mo>&PartialD;</mo>
+              <mo>(</mo>
+              <msub><mo>&PartialD;</mo><mi>&mu;</mi></msub>
+              <mi>&psi;</mi>
+              <mo>)</mo>
+            </mrow>
+          </mfrac>
+          <mo>)</mo>
+          <mo>-</mo>
+          <mfrac>
+            <mrow><mo>&PartialD;</mo><mi mathvariant="script">L</mi></mrow>
+            <mrow><mo>&PartialD;</mo><mi>&psi;</mi></mrow>
+          </mfrac>
+          <mo>=</mo>
+          <mn>0</mn>
+        </mrow>
+      </math>
+    </div>
+
+    <p>
+      For the field in the demo, this becomes:
+    </p>
+
+    <div class="equation">
+      <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+        <mrow>
+          <msub><mi>&psi;</mi><mrow><mi>t</mi><mi>t</mi></mrow></msub>
+          <mo>=</mo>
+          <msup><mi>c</mi><mn>2</mn></msup>
+          <msub><mi>&psi;</mi><mrow><mi>x</mi><mi>x</mi></mrow></msub>
+          <mo>-</mo>
+          <msup><mi>&mu;</mi><mn>2</mn></msup>
+          <mi>&psi;</mi>
+        </mrow>
+      </math>
+    </div>
+
+    <h3>Field Panels</h3>
+    <ul>
+      <li><span class="green">3D field view:</span> shows the current shape of <code>psi(t, x)</code>.</li>
+      <li><span class="violet">Density plot:</span> shows the local Lagrangian density and energy density across space.</li>
+      <li><span class="blue">Field EL terms plot:</span> compares <code>psi_tt</code> with <code>c^2 psi_xx - mu^2 psi</code>.</li>
+      <li><span class="red">Residual:</span> shows the local mismatch in the field equation. It should stay small except for numerical error.</li>
+    </ul>
+
+    <h3>Field Graph Formulas</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Graph</th>
+          <th>Inputs</th>
+          <th>Curves Shown</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>3D field view</td>
+          <td><code>x_grid</code>, <code>psi(t, x)</code></td>
+          <td>The current field shape at the selected time.</td>
+        </tr>
+        <tr>
+          <td>Field density</td>
+          <td><code>psi</code>, <code>psi_t</code>, <code>psi_x</code>, <code>c</code>, <code>mu</code></td>
+          <td><code>mathcal L = 1/2 psi_t^2 - 1/2 c^2 psi_x^2 - 1/2 mu^2 psi^2</code> and energy density <code>1/2 psi_t^2 + 1/2 c^2 psi_x^2 + 1/2 mu^2 psi^2</code>.</td>
+        </tr>
+        <tr>
+          <td>Field EL terms</td>
+          <td><code>psi_tt</code>, <code>psi_xx</code>, <code>psi</code>, <code>c</code>, <code>mu</code></td>
+          <td><code>psi_tt</code>, <code>c^2 psi_xx - mu^2 psi</code>, and the residual <code>psi_tt - (c^2 psi_xx - mu^2 psi)</code>.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>Controls</h2>
+    <div class="grid">
+      <div class="card">
+        <h3>Preset</h3>
+        <p>
+          Changes particle mass, spring stiffness, field wave speed, and field mass term.
+          The math stays the same, but the relative motion changes.
+        </p>
+      </div>
+      <div class="card">
+        <h3>Play</h3>
+        <p>
+          Advances the particle and field simulations through time.
+        </p>
+      </div>
+      <div class="card">
+        <h3>Reset</h3>
+        <p>
+          Returns the animation to the initial state.
+        </p>
+      </div>
+      <div class="card">
+        <h3>Slider</h3>
+        <p>
+          Scrubs through time so a specific moment can be inspected.
+        </p>
+      </div>
+    </div>
+
+    <h2>Reading The Dashboard</h2>
+    <p>
+      The left half answers the particle question: "How does <code>L = T - V</code> become
+      <code>F = m a</code>?" The right half answers the field question: "How does a
+      Lagrangian density become a differential equation at every point in space?"
+    </p>
+    <p>
+      The two red residual curves are the quickest correctness check. They represent the
+      difference between the two sides of the Euler-Lagrange equation. When the residual is
+      near zero, the visualized system is satisfying the equation.
+    </p>
+
+    <h2>Files</h2>
+    <ul>
+      <li><code>euler-lagrange-particle-field-gpu.py</code>: the OpenGL/Qt demo.</li>
+      <li><code>euler-lagrange-particle-field-doc.html</code>: this documentation file.</li>
+    </ul>
+  </main>
+</body>
+</html>
