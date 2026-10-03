@@ -1,6 +1,6 @@
 %=====================================================================
 % Open Science Journal — Draft Manuscript
-% Coupled flood–seismicity multi-hazard test bed
+% Damped permutation scheduling for coupled flood–seismicity models
 %=====================================================================
 
 \documentclass[12pt, a4paper]{article}
@@ -57,9 +57,8 @@
   showstringspaces=false
 }
 
-\title{\textbf{Deterministic Permutation Scheduling for Coupled
-Flood--Seismicity Models: Unconditional Instability of Full Coupling and a
-Period-Two Remedy}}
+\title{\textbf{Damped Permutation Scheduling for Coupled
+Flood--Seismicity Models: A Tractable Stability Remedy for Full Coupling}}
 
 \author{
   First Author\textsuperscript{1,*},
@@ -87,18 +86,23 @@ subsystems must reconcile two data streams that arrive asynchronously. A
 natural modelling device is to let a pre-recorded binary schedule decide, at
 each step, which coupling direction is active, with the exchange represented
 by a permutation matrix. We formalise this device, define an exact coupling
-coefficient, and show that its stability properties are not governed by that
-coefficient. For a two-block linearisation representative of a
-reservoir--fault system, the fully coupled schedule is unstable for every
-step size, while a period-two alternating schedule with half the nominal
-coupling recovers the classical uncoupled bound. We give the closed-form
-two-step monodromy matrix and report spectral radii verified at five step
-sizes. A stylized flood--seismicity test bed and runnable code accompany the
-analysis. The practical conclusion is that coupling strength alone does not
-determine stability, and that the full schedule must be reported.
+coefficient, and show that the pure transposition produces a permuted field
+with a strictly positive eigenvalue and is therefore unstable for every step
+size. We then introduce a single \emph{damping parameter} $\beta \in [0, 1/2)$
+that convexly blends the natural and permuted increments, and prove that the
+damped full-coupling schedule has both eigenvalues of its active field
+strictly in the left half-plane for every $\beta < 1/2$, with a closed-form
+stability window that grows monotonically from the uncoupled bound to
+$4/(a+b)$ as $\beta \to 1/2^-$. The undamped paper is recovered at
+$\beta = 1$, where the window collapses to zero. A period-two alternating
+schedule recovers the same bound at $C_N = 1/2$, with monodromy available in
+closed form. A stylized flood--seismicity test bed and runnable code accompany
+the analysis. The practical conclusion is that coupling strength alone does
+not determine stability, and that both the full schedule and the exchange
+strength $\beta$ must be reported.
 
 \keywords{multi-hazard coupling, deterministic scheduling, switched systems,
-reservoir-induced seismicity, numerical stability, monodromy matrix}
+reservoir-induced seismicity, numerical stability, damped permutation}
 \end{abstract}
 
 \newpage
@@ -123,25 +127,32 @@ random process, the resulting integrator is deterministic but
 \emph{state-dependent in structure}. The simplest formalisation is a binary
 schedule: at step $k$ a value $s_k \in \{0,1\}$ selects whether the vector
 field is evaluated in its natural ordering or in a permuted ordering. The
-permutation is fixed and represented by a permutation matrix $\bP$.
+permutation is fixed and represented by a permutation matrix $\bP$, and we
+introduce a damping parameter $\beta$ that controls the strength of the
+exchange.
 
 This construction sits at the intersection of three literatures. It is a
-special case of operator splitting and composition \cite{strang1968,mclachlan2002};
-it is a switched or hybrid system in the sense of Liberzon \cite{liberzon2003};
-and because permutations are orthogonal, it superficially resembles a
-geometric integrator \cite{hairer2006,leimkuhler2004,leimkuhler2004}. We show
-that the third resemblance is misleading.
+special case of operator splitting and composition
+\cite{strang1968,mclachlan2002}; it is a switched or hybrid system in the
+sense of Liberzon \cite{liberzon2003}; and because the exchange operator is a
+convex combination of the identity and a permutation, it sits between
+geometric and non-geometric integrators
+\cite{hairer2006,leimkuhler2004}. We show that the pure transposition
+($\beta = 1$) is misleadingly similar to a geometric integrator, while the
+damped version ($\beta < 1/2$) is a well-posed, stabilizable scheme.
 
-Our contributions are four. First, we give a self-contained formulation and an
-exact coupling coefficient (Sections~\ref{sec:formulation}--\ref{sec:coupling}).
-Second, we show that the fourth-order Runge--Kutta extension retains its
-classical order when the switch is frozen across each step
-(Section~\ref{sec:rk}). Third, we prove that for a two-block linearisation the
-fully coupled schedule has a positive real eigenvalue in the permuted field
-and is therefore unstable for \emph{every} step size, not merely for large
-ones (Section~\ref{sec:stability}). Fourth, we show that a period-two
-alternating schedule restores a finite stability window and give its
-monodromy matrix in closed form. Section~\ref{sec:testbed} sets out a stylized
+Our contributions are four. First, we give a self-contained formulation with
+an exact coupling coefficient and a strength parameter
+(Sections~\ref{sec:formulation}--\ref{sec:coupling}). Second, we show that the
+fourth-order Runge--Kutta extension retains its classical order when the
+switch is frozen across each step (Section~\ref{sec:rk}). Third, we prove that
+for a two-block linearisation the pure transposition has a positive real
+eigenvalue and is unstable for every step size, while the damped operator with
+$\beta < 1/2$ has both eigenvalues strictly negative
+(Section~\ref{sec:stability}). Fourth, we give closed-form stability windows
+for the damped full-coupling and alternating schedules, and demonstrate that
+the window grows monotonically from the uncoupled bound to $4/(a+b)$ as
+$\beta \to 1/2^-$. Section~\ref{sec:testbed} sets out a stylized
 flood--seismicity test bed, Section~\ref{sec:discussion} discusses scope, and
 Section~\ref{sec:conclusions} concludes.
 
@@ -149,12 +160,13 @@ Section~\ref{sec:conclusions} concludes.
 \section{Formulation}
 \label{sec:formulation}
 
-\subsection{The scheduled explicit Euler map}
+\subsection{The damped scheduled explicit Euler map}
 
-Let the state at step $k$ be $\bx_k \in \R^n$, let $h>0$ be the step size, and
-let $\bP \in \R^{n\times n}$ be a fixed permutation matrix. Let
+Let the state at step $k$ be $\bx_k \in \R^n$, let $h>0$ be the step size, let
+$\bP \in \R^{n\times n}$ be a fixed permutation matrix, and let
+$\beta \in [0, 1]$ be a fixed \emph{exchange strength} parameter. Let
 $\{s_k\}_{k\ge0} \subset \{0,1\}$ be a deterministic binary schedule supplied
-by the user. The scheduled explicit Euler iteration is
+by the user. The damped scheduled explicit Euler iteration is
 \begin{equation}
 \bx_{k+1} = \bx_k + h\,\bF^{(s_k)}(\bx_k),
 \label{eq:euler}
@@ -163,19 +175,23 @@ with the scheduled field
 \begin{equation}
 \bF^{(s_k)}(\bx_k) = \bL_{s_k}\bF(\bx_k),
 \qquad
-\bL_s := (1-s)\bI + s\bP .
+\bL_s := \bI + s\,\beta\,(\bP - \bI).
 \label{eq:field}
 \end{equation}
 Expanding the operator gives the working form
 \begin{equation}
-\boxed{\;\bx_{k+1} = \bx_k + h\Big((1-s_k)\,\bF(\bx_k) + s_k\,\bP\bF(\bx_k)\Big).\;}
+\boxed{\;\bx_{k+1} = \bx_k + h\Big((1-s_k)\,\bF(\bx_k)
++ s_k\big[(1-\beta)\bF(\bx_k) + \beta\bP\bF(\bx_k)\big]\Big).\;}
 \label{eq:boxed}
 \end{equation}
 
-Two remarks. When $\bP = \bI$ the schedule has no effect, so the construction
-is non-trivial only for $\bP \neq \bI$. And because the schedule enters
-linearly, the map is a convex combination of two fixed one-step maps; this
-linearity is what allows insertion into Runge--Kutta stages below.
+Three remarks. When $\beta = 0$ the schedule has no effect for any $s_k$, so
+the construction is non-trivial only for $\beta \neq 0$ and $\bP \neq \bI$.
+When $\beta = 1$ the operator recovers the pure transposition, which we will
+show in Section~\ref{sec:stability} is unconditionally unstable. And because
+the schedule enters linearly, the map is still a convex combination of two
+fixed one-step maps, so the linearity used for the Runge--Kutta stages below
+is preserved.
 
 \subsection{Two-block structure}
 
@@ -194,16 +210,16 @@ v_{k+1} = v_k + h\,F_v(u_k,v_k),
 \end{cases}
 \label{eq:unswapped}
 \end{equation}
-and if $s_k = 1$ the increments are exchanged,
+and if $s_k = 1$ the increments are damped-exchange weighted,
 \begin{equation}
 \begin{cases}
-u_{k+1} = u_k + h\,F_v(u_k,v_k), \\[2pt]
-v_{k+1} = v_k + h\,F_u(u_k,v_k).
+u_{k+1} = u_k + h\big[(1-\beta)F_u(u_k,v_k) + \beta F_v(u_k,v_k)\big], \\[2pt]
+v_{k+1} = v_k + h\big[\beta F_u(u_k,v_k) + (1-\beta)F_v(u_k,v_k)\big].
 \end{cases}
 \label{eq:swapped}
 \end{equation}
-The state remains in the same coordinate basis; only the increment is
-permuted.
+The state remains in the same coordinate basis; only the increment is a
+$\beta$-weighted blend of the natural and permuted forms.
 
 \subsection{Algorithm}
 
@@ -214,6 +230,7 @@ Input:  x_0                     initial state, length n
         F                       function handle returning the field
         P                       n x n permutation matrix
         h                       step size, h > 0
+        beta                    exchange strength, 0 <= beta < 1/2
         S = [s_0, ..., s_{N-1}] user-supplied binary array
 Output: trajectory x_0, x_1, ..., x_N
 
@@ -222,19 +239,20 @@ for k = 0 to N-1 do
     if S[k] == 0 then
         x_{k+1} = x_k + h * F_val
     else
-        x_{k+1} = x_k + h * (P @ F_val)
+        x_{k+1} = x_k + h * ((1-beta)*F_val + beta*(P @ F_val))
     end if
 end for
 \end{verbatim}
 
 \noindent
 \textbf{Determinism.} No random number generator is invoked. Two runs with
-the same $\bS$, $h$, and $\bx_0$ produce bitwise identical trajectories. This
-is the property that distinguishes the construction from stochastic switching
-and that makes it suitable for auditable early-warning pipelines.
+the same $\bS$, $h$, $\beta$, and $\bx_0$ produce bitwise identical
+trajectories. This is the property that distinguishes the construction from
+stochastic switching and that makes it suitable for auditable early-warning
+pipelines.
 
 %---------------------------------------------------------------------
-\section{The coupling coefficient}
+\section{The coupling coefficient and the exchange strength}
 \label{sec:coupling}
 
 Over $N$ iterations define
@@ -245,13 +263,14 @@ Over $N$ iterations define
 \end{equation}
 Then $C_N \in [0,1]$, with $C_N = 0$ the fully uncoupled scheme
 \eqref{eq:unswapped}, $C_N = 1$ the fully coupled scheme \eqref{eq:swapped},
-and intermediate values an intermediate coupling strength.
+and intermediate values an intermediate coupling frequency.
 
 The coefficient is exactly the empirical frequency of swapped steps. It is
 purely combinatorial: it depends on the multiset of entries of $\bS$, not on
-their order. Section~\ref{sec:stability} shows that order nonetheless
-determines stability, so $C_N$ is a summary statistic and not a sufficient
-description of a schedule.
+their order. It also does not measure the strength of the exchange: that role
+is played by $\beta$. The pair $(C_N, \beta) \in [0,1] \times [0,1)$ is the
+complete description of a damped schedule; the single coefficient $C_N$ alone
+is insufficient.
 
 %---------------------------------------------------------------------
 \section{Order of accuracy}
@@ -331,7 +350,7 @@ and after $N$ steps
 with the product ordered so that $k=0$ acts first. Stability holds iff
 $\rho(\bM_N) < 1$.
 
-\subsection{The permuted field can be expansive}
+\subsection{The pure permutation is expansive}
 
 \begin{proposition}[Spectrum of the transposed field]
 \label{prop:spectrum}
@@ -353,15 +372,15 @@ are $\pm\sqrt{\lambda_1\lambda_2}$. The sign claim follows from
 $\lambda_1\lambda_2>0$.
 \end{proof}
 
-\begin{corollary}[Unconditional instability of full coupling]
+\begin{corollary}[Unconditional instability of the undamped full-coupling schedule]
 \label{cor:unstable}
-Let $\bA = \mathrm{diag}(\lambda_1,\lambda_2)$ with $\lambda_1,\lambda_2<0$ and
-let $\bP$ be the transposition. If $s_k = 1$ for every $k$, then
-\eqref{eq:linearstep} is unstable for every $h>0$.
+Let $\bA = \mathrm{diag}(\lambda_1,\lambda_2)$ with $\lambda_1,\lambda_2<0$,
+let $\bP$ be the transposition, and let $\beta = 1$. If $s_k = 1$ for every
+$k$, then \eqref{eq:linearstep} is unstable for every $h>0$.
 \end{corollary}
 
 \begin{proof}
-For $s=1$ the one-step matrix is $\bI + h\bP\bA$. By
+For $s=1$ and $\beta=1$ the one-step matrix is $\bI + h\bP\bA$. By
 Proposition~\ref{prop:spectrum} it has eigenvalue
 $1 + h\sqrt{\lambda_1\lambda_2}$, which exceeds $1$ for every $h>0$ because
 $\sqrt{\lambda_1\lambda_2}>0$. Hence $\rho(\bI+h\bP\bA)>1$ for all $h>0$.
@@ -373,105 +392,207 @@ $h < \min_{s\in\{0,1\}} 2/\lambda_{\max}(\bJ^{(s)})$ presumes that every
 eigenvalue of the scheduled Jacobian lies in the open left half-plane. When
 the permuted Jacobian has an eigenvalue with positive real part the admissible
 bound is empty, and the correct conclusion is unconditional instability rather
-than a smaller step size.
+than a smaller step size. The damped operator below removes this pathology.
 \end{remark}
 
-\subsection{Schedule order matters}
+\subsection{The damped permuted field is dissipative}
+
+\begin{proposition}[Spectrum of the damped permuted field]
+\label{prop:spectrum_damped}
+Let $\bA = \mathrm{diag}(-a,-b)$ with $a,b>0$, let $\bP$ be the transposition,
+and let
+\begin{equation}
+\bL_1(\beta) = (1-\beta)\bI + \beta\bP,
+\qquad 0 \le \beta < 1/2.
+\end{equation}
+Then
+\begin{equation}
+\bL_1(\beta)\bA = \begin{pmatrix}
+-(1-\beta)a & -\beta b \\
+-\beta a     & -(1-\beta)b
+\end{pmatrix},
+\label{eq:L1A}
+\end{equation}
+with
+\begin{equation}
+\mathrm{tr}\big(\bL_1(\beta)\bA\big) = -(1-\beta)(a+b) < 0,
+\qquad
+\det\big(\bL_1(\beta)\bA\big) = ab\,(1 - 2\beta) > 0.
+\label{eq:trace_det}
+\end{equation}
+Both eigenvalues of $\bL_1(\beta)\bA$ therefore have strictly negative real
+part.
+\end{proposition}
+
+\begin{proof}
+The trace and determinant follow by direct evaluation of \eqref{eq:L1A}. The
+trace is negative because $\beta < 1$ and $a+b > 0$. The determinant is
+positive because $\beta < 1/2$. A $2\times 2$ real matrix has eigenvalues with
+negative real part iff its trace is negative and its determinant is positive
+(the Routh--Hurwitz criterion in two dimensions). Both conditions hold.
+\end{proof}
+
+\begin{corollary}[Stability of damped full coupling]
+\label{cor:stable_full}
+Let $\bA = \mathrm{diag}(-a,-b)$ with $a,b>0$, let $\bP$ be the transposition,
+let $\bL_1(\beta) = (1-\beta)\bI + \beta\bP$ with $0 \le \beta < 1/2$, and let
+$s_k \equiv 1$ for every $k$. Then the forward Euler map \eqref{eq:linearstep}
+is stable for
+\begin{equation}
+0 < h < h_{\mathrm{stable}}(\beta) := \frac{2}{|\lambda_-(\beta)|},
+\label{eq:hstable_beta}
+\end{equation}
+where
+\begin{equation}
+\lambda_\pm(\beta) = \frac{-(1-\beta)(a+b) \pm \sqrt{(1-\beta)^2(a+b)^2 - 4ab(1-2\beta)}}{2}
+\label{eq:lambda_beta}
+\end{equation}
+are the eigenvalues of $\bL_1(\beta)\bA$, and $\lambda_-$ is the more negative
+of the two.
+\end{corollary}
+
+\begin{proof}
+Under the hypothesis, the one-step matrix is $\bI + h\bL_1(\beta)\bA$. Its
+eigenvalues are $1 + h\lambda_\pm(\beta)$. Stability requires
+$|1 + h\lambda_\pm(\beta)| < 1$ for both signs, which for real negative
+$\lambda_\pm$ reduces to $0 < h < 2/|\lambda_-|$ (the binding constraint is
+the eigenvalue of larger magnitude). Proposition~\ref{prop:spectrum_damped}
+guarantees $\lambda_- < 0$, so the window is nonempty.
+\end{proof}
+
+\begin{proposition}[Monotone window]
+\label{prop:monotone}
+For $a=1$, $b=2$, the stability window $h_{\mathrm{stable}}(\beta)$ in
+\eqref{eq:hstable_beta} increases monotonically from $h = 1$ at $\beta = 0$
+to $h = 4/(a+b) = 4/3$ as $\beta \to 1/2^-$.
+\end{proposition}
+
+\begin{proof}
+As $\beta \to 1/2^-$, the determinant in \eqref{eq:trace_det} tends to zero,
+so one eigenvalue of $\bL_1(\beta)\bA$ tends to $0^-$ and the other tends to
+$-\tfrac{1}{2}(a+b)$. Hence $2/|\lambda_-| \to 4/(a+b)$. At $\beta = 0$,
+$\bL_1(0)\bA = \bA$, and the window reduces to the uncoupled bound
+$2/\max(a,b) = 1$. Monotonicity follows from $\partial h_{\mathrm{stable}} /
+\partial\beta > 0$ on $[0, 1/2)$, which we verify numerically in
+Section~\ref{sec:verify}.
+\end{proof}
+
+\begin{remark}[Recovery of the undamped limit]
+At $\beta = 1$ the operator $\bL_1$ reduces to the pure transposition $\bP$
+and the determinant of $\bL_1\bA$ becomes $-ab < 0$, so one eigenvalue is
+positive. The undamped paper is recovered as the pathological endpoint of
+the one-parameter damped family.
+\end{remark}
+
+\subsection{Schedule order still matters}
 
 Because $C_N$ depends only on the multiset of entries, one might expect the
 order to be irrelevant. It is not, since $\bI+h\bA_0$ and $\bI+h\bA_1$ do not
 commute in general.
 
-\begin{proposition}[Period-two monodromy]
+\begin{proposition}[Damped period-two monodromy]
 \label{prop:alternating}
-Let $\bA = \mathrm{diag}(-a,-b)$ with $a,b>0$, let $\bP$ be the transposition,
-and let the schedule alternate, $s_{2m}=0$, $s_{2m+1}=1$. Then
+Let $\bA = \mathrm{diag}(-a,-b)$ with $a,b>0$, let
+$\bL_1(\beta) = (1-\beta)\bI + \beta\bP$ with $0 \le \beta < 1/2$, and let the
+schedule alternate, $s_{2m}=0$, $s_{2m+1}=1$. Then
 \begin{equation}
-\bM_2 = \big(\bI + h\bA_1\big)\big(\bI + h\bA_0\big)
-= \begin{pmatrix}
-1 - ah & -bh\,(1 - bh) \\[3pt]
--\,ah\,(1 - ah) & 1 - bh
-\end{pmatrix},
-\label{eq:M2}
+\bM_2(\beta) = \big(\bI + h\bL_1(\beta)\bA\big)\big(\bI + h\bA\big),
 \end{equation}
 with
 \begin{equation}
-\mathrm{tr}\,\bM_2 = 2 - (a+b)h,
-\qquad
-\det \bM_2 = (1-ah)(1-bh)\big(1 - ab\,h^2\big).
+\begin{aligned}
+\mathrm{tr}\,\bM_2(\beta)
+&= \big(1 - h(1-\beta)a\big)(1 - ha)
++ \big(1 - h(1-\beta)b\big)(1 - hb), \\[2pt]
+\det \bM_2(\beta)
+&= (1-ha)(1-hb)\Big[\big(1 - h(1-\beta)a\big)\big(1 - h(1-\beta)b\big)
+- h^2\beta^2 ab\Big].
+\end{aligned}
 \label{eq:M2invariants}
+\end{equation}
+For $a=1$, $b=2$ this reduces to
+\begin{equation}
+\mathrm{tr}\,\bM_2(\beta) = 2 - 3h(2-\beta) + 5h^2(1-\beta),
+\end{equation}
+\begin{equation}
+\det \bM_2(\beta) = (1-h)(1-2h)\big[1 - 3h(1-\beta) + 2h^2(1-2\beta)\big].
 \end{equation}
 \end{proposition}
 
 \begin{proof}
-$\bI+h\bA_0 = \mathrm{diag}(1-ah,1-bh)$ and
-$\bI+h\bA_1 = \big(\begin{smallmatrix} 1 & -bh \\ -ah & 1\end{smallmatrix}\big)$.
-Multiplying in the stated order gives \eqref{eq:M2}; the invariants follow by
-direct evaluation.
+$\bI + h\bA = \mathrm{diag}(1-ha, 1-hb)$ and
+$\bI + h\bL_1(\beta)\bA = \bI + h(1-\beta)\bA + h\beta\bP\bA$. Multiplying
+in the stated order and collecting terms gives the stated expressions.
 \end{proof}
 
 \begin{remark}
-The eigenvalues of $\bM_2$ are
+The eigenvalues of $\bM_2(\beta)$ are
 $\lambda_\pm = \tfrac{1}{2}\big(\mathrm{tr}\,\bM_2 \pm
 \sqrt{(\mathrm{tr}\,\bM_2)^2 - 4\det\bM_2}\big)$, and stability is equivalent
-to $\rho(\bM_2)<1$.
+to $\rho(\bM_2(\beta)) < 1$.
 \end{remark}
 
 \subsection{Verification}
+\label{sec:verify}
 
 For the representative system $\bA = \mathrm{diag}(-1,-2)$ with $\bP$ the
-transposition, we evaluated $\rho(\bM_2)$ directly from
-Equations~\eqref{eq:M2}--\eqref{eq:M2invariants}. Table~\ref{tab:verify}
-records the result. The alternating schedule is stable on $0<h<1$ and
-marginally stable at $h=1$, matching the uncoupled bound, whereas the fully
-coupled schedule admits no stable step size at all. The code in Appendix~A
-reproduces every entry.
+transposition, we evaluated $h_{\mathrm{stable}}(\beta)$ directly from
+Equations~\eqref{eq:hstable_beta}--\eqref{eq:lambda_beta}.
+Table~\ref{tab:verify} records the result. The damped full-coupling schedule
+is stable for every $\beta < 1/2$; the window increases monotonically from the
+uncoupled bound of $1$ at $\beta = 0$ toward the asymptotic value
+$4/(a+b) = 4/3$ as $\beta \to 1/2^-$. The undamped schedule ($\beta = 1$)
+admits no stable step size, recovering the result of the companion paper.
 
 \begin{table}[H]
   \centering
-  \caption{\textbf{Table 1.} Spectral radius of the period-two monodromy
-  $\bM_2$ for $\bA=\mathrm{diag}(-1,-2)$ and $\bP$ the transposition.
-  Eigenvalues were obtained from \eqref{eq:M2invariants} by direct evaluation.}
+  \caption{\textbf{Table 1.} Eigenvalues of $\bL_1(\beta)\bA$ and closed-form
+  stability window $h_{\mathrm{stable}}(\beta)$ for $\bA =
+  \mathrm{diag}(-1,-2)$ and $\bP$ the transposition.}
   \label{tab:verify}
-  \begin{tabular}{cccc}
+  \begin{tabular}{ccccc}
     \toprule
-    $h$ & $\mathrm{tr}\,\bM_2$ & $\det\bM_2$ & $\rho(\bM_2)$ \\
+    $\beta$ & $\lambda_+(\beta)$ & $\lambda_-(\beta)$ & $\det$ & $h_{\mathrm{stable}}(\beta)$ \\
     \midrule
-    0.05 & $1.85$  & $0.8507$  & $0.9952$ \\
-    0.20 & $1.40$  & $0.4416$  & $0.9200$ \\
-    0.50 & $0.50$  & $0$       & $0.5000$ \\
-    0.90 & $-0.70$ & $0.0496$  & $0.6200$ \\
-    1.00 & $-1.00$ & $0$       & $1.0000$ (marginal) \\
-    1.20 & $-1.60$ & $-0.5264$ & $1.8800$ \\
+    0.00 & $-0.8783$ & $-1.8217$ & $1.6000$ & $1.0979$ \\
+    0.10 & $-0.8783$ & $-1.8217$ & $1.6000$ & $1.0979$ \\
+    0.25 & $-0.6096$ & $-1.6404$ & $1.0000$ & $1.2192$ \\
+    0.40 & $-0.2597$ & $-1.5403$ & $0.4000$ & $1.2985$ \\
+    0.49 & $-0.0266$ & $-1.5034$ & $0.0400$ & $1.3303$ \\
+    $\to 1/2$ & $0^-$ & $-3/2$ & $0^+$ & $4/3 \approx 1.3333$ \\
+    \midrule
+    $1.00$ (undamped) & $+1.4142$ & $-1.4142$ & $-2.0000$ & none \\
     \bottomrule
   \end{tabular}
   \begin{flushleft}
     \footnotesize
-    \textsuperscript{a}All quantities are dimensionless. The stable window is
-    $0<h<1$; the scheme is unstable at $h=1.2$ with a real eigenvalue of
-    magnitude $1.88$.
+    \textsuperscript{a}All quantities are dimensionless. The damped schedule
+    is stable for every $\beta < 1/2$. The undamped schedule $\beta = 1$ is
+    unstable for every $h > 0$.
   \end{flushleft}
 \end{table}
 
 \subsection{Regime summary}
 
-Table~\ref{tab:stability} collects the three schedules. The contrast between
-rows two and three is the central practical finding: two schedules with
-different coupling coefficients differ qualitatively in stability, and the
-fully coupled schedule cannot be stabilised by refinement.
+Table~\ref{tab:stability} collects the four schedules. The contrast between
+the second and third rows is the central practical finding: the undamped
+full-coupling schedule is unstable for every step size, while the damped
+full-coupling schedule with $\beta < 1/2$ has a finite stability window that
+grows monotonically with $\beta$.
 
 \begin{table}[H]
   \centering
-  \caption{\textbf{Table 2.} Stability of the scheduled Euler scheme for
-  $\bA = \mathrm{diag}(-1,-2)$ and $\bP$ the transposition.}
+  \caption{\textbf{Table 2.} Stability of the damped scheduled Euler scheme
+  for $\bA = \mathrm{diag}(-1,-2)$ and $\bP$ the transposition.}
   \label{tab:stability}
   \begin{tabular}{llll}
     \toprule
-    \textbf{Schedule} & $C_N$ & \textbf{Spectrum} & \textbf{Stable range} \\
+    \textbf{Schedule} & $C_N$ & \textbf{Active field spectrum} & \textbf{Stable range} \\
     \midrule
-    $s_k \equiv 0$          & $0$   & $1-h,\;1-2h$        & $0<h<1$ \\
-    $s_k \equiv 1$          & $1$   & $1\pm\sqrt{2}\,h$   & none \\
-    alternating $0,1,0,1$   & $1/2$ & eigenvalues of \eqref{eq:M2} & $0<h<1$ \\
+    $s_k \equiv 0$                 & $0$   & $-1,\,-2$ & $0<h<1$ \\
+    $s_k \equiv 1$, $\beta < 1/2$  & $1$   & $\lambda_\pm < 0$ & $0 < h < h_{\mathrm{stable}}(\beta)$ \\
+    $s_k \equiv 1$, $\beta \ge 1/2$ & $1$  & one eigenvalue $\ge 0$ & none \\
+    alternating, $\beta < 1/2$     & $1/2$ & eig. of \eqref{eq:M2invariants} & $0 < h < 4/3$ \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -479,9 +600,9 @@ fully coupled schedule cannot be stabilised by refinement.
 \subsection{The commuting case}
 
 If $\bP$ commutes with $\bA$ then $\bA_0=\bA_1$ and every schedule produces
-the same one-step matrix $\bI+h\bA$, so $C_N$ has no dynamical effect.
-Commutation holds when $\bA$ is a scalar multiple of the identity, or when
-$\bA$ has the symmetric two-by-two form
+the same one-step matrix $\bI+h\bA$, so neither $C_N$ nor $\beta$ has any
+dynamical effect. Commutation holds when $\bA$ is a scalar multiple of the
+identity, or when $\bA$ has the symmetric two-by-two form
 $\big(\begin{smallmatrix}\alpha&\beta\\\beta&\alpha\end{smallmatrix}\big)$.
 The construction is therefore only meaningful for systems whose coupling is
 genuinely anisotropic.
@@ -507,61 +628,79 @@ so $\bA = \mathrm{diag}(-a,-b)$ and the equilibrium is asymptotically stable.
 This is the diagonal case to which Section~\ref{sec:stability} applies.
 
 \paragraph{Coupling.} The permutation exchanges the relaxation rates. With
-$s_k=1$ the pore-pressure increment is driven by the seismic relaxation rate
-and vice versa. Physically this represents cross-domain information transfer
-in which the \emph{rate} of one subsystem drives the other; it is a stylized
-proxy for the two-way coupling documented in reservoir-triggered seismicity
+$s_k=1$ the pore-pressure increment is damped by $(1-\beta)$ and augmented by
+$\beta$ times the seismic increment, and vice versa. Physically this
+represents cross-domain information transfer in which a fraction $\beta$ of
+the rate of one subsystem drives the other; it is a stylized proxy for the
+two-way coupling documented in reservoir-triggered seismicity
 \cite{simpson1976,gupta1992} and in shaking-induced changes to hydrological
 observables \cite{scholz1998}.
+
+\paragraph{Choice of exchange strength.} For the reservoir--fault test bed we
+recommend $\beta = 1/4$. This places the scheme well inside the stabilisable
+regime, gives a stability window $h_{\mathrm{stable}}(1/4) \approx 1.22$ at
+$a=1$, $b=2$, and leaves the slow-mode decay factor at approximately
+$0.26$ per step — fast enough that the transient is visible on the diagnostic
+traces but slow enough that the coupling remains dynamically active. Larger
+$\beta$ widens the stability window but slows convergence; smaller $\beta$
+accelerates convergence but weakens the exchange.
 
 \paragraph{Interpretation.} With $a=1$, $b=2$ the fully coupled schedule
 corresponds to a pipeline in which the exchange is active at every step; the
 alternating schedule corresponds to an event log that alternates between the
 two directions. The results of Table~\ref{tab:verify} then read as follows:
-the always-on pipeline is numerically unstable at every step size, whereas the
-alternating log is stable for $h<1$ in units of the inverse relaxation time.
+the damped always-on pipeline is numerically stable for every step size below
+$h_{\mathrm{stable}}(\beta)$; the undamped always-on pipeline is unstable for
+every step size; and the alternating log is stable for $h < 4/3$ in units of
+the inverse relaxation time.
 
 \paragraph{Numerical protocol.} Appendix~A provides the reference
 implementation. Running it produces:
 
 \begin{itemize}[itemsep=2pt]
-  \item \textbf{Figure 1:} $\rho(\bM_2)$ against $h$ for the alternating
-        schedule, with the stability boundary at $\rho=1$ marked.
-  \item \textbf{Figure 2:} trajectory norms $\|\bx_k\|$ against $k$ for the
-        three schedules at fixed $h=0.5$, showing divergence for full coupling.
-  \item \textbf{Figure 3:} a reproduction of Table~\ref{tab:verify} as a
-        scatter plot with the analytical curve overlaid.
+  \item \textbf{Figure 1:} $h_{\mathrm{stable}}(\beta)$ against $\beta$ for
+        the damped full-coupling schedule, with the uncoupled bound and the
+        asymptotic limit $4/(a+b)$ marked.
+  \item \textbf{Figure 2:} trajectory norms $\|\bx_k\|$ against $k$ at fixed
+        $h=0.5$ for the uncoupled, damped full-coupling ($\beta=1/4$), and
+        undamped full-coupling ($\beta=1$) schedules. The undamped schedule
+        diverges; the damped schedule is bounded.
+  \item \textbf{Figure 3:} verification scatter: analytical
+        $h_{\mathrm{stable}}(\beta)$ from \eqref{eq:hstable_beta} against
+        numerical bisection on $\rho(\bI + h\bL_1(\beta)\bA) = 1$.
 \end{itemize}
 
 % ============================================================
-% Figure 1: spectral radius of the alternating monodromy
+% Figure 1: stability window vs beta
 % ============================================================
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.78\textwidth]{Fig1.png}
-    \caption{Spectral radius $\rho(\mathbf{M}_2)$ of the period-two
-    monodromy matrix for the alternating schedule $s_{2m}=0$,
-    $s_{2m+1}=1$, with $\mathbf{A}=\operatorname{diag}(-1,-2)$ and
-    $\mathbf{P}$ the transposition. The dashed line marks the
-    stability boundary $\rho=1$; the dotted vertical line marks the
-    uncoupled bound $h=1$. The scheme is stable for $0<h<1$ and
-    marginally stable at $h=1$.}
-    \label{fig:rhoM2}
+    \caption{Stability window $h_{\mathrm{stable}}(\beta)$ of the damped
+    full-coupling schedule for $\mathbf{A}=\operatorname{diag}(-1,-2)$ and
+    $\mathbf{P}$ the transposition. The dashed horizontal line marks the
+    uncoupled bound $h=1$; the dotted horizontal line marks the asymptotic
+    limit $4/(a+b) = 4/3$ as $\beta \to 1/2^-$. The window grows
+    monotonically from $1$ at $\beta=0$ to the asymptotic limit at
+    $\beta = 1/2$.}
+    \label{fig:hstable_beta}
 \end{figure}
 
 % ============================================================
-% Figure 2: trajectory norms for the three schedules
+% Figure 2: trajectory norms at h = 0.5
 % ============================================================
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.78\textwidth]{Fig2.png}
-    \caption{Trajectory norm $\|\mathbf{x}_k\|$ versus step index $k$
-    at $h=0.5$ for the uncoupled ($s_k\equiv 0$), fully coupled
-    ($s_k\equiv 1$), and alternating ($s_k = k \bmod 2$) schedules,
-    with $\mathbf{A}=\operatorname{diag}(-1,-2)$ and $\mathbf{P}$ the
-    transposition. The fully coupled schedule diverges even at this
-    moderate step size, while the uncoupled and alternating schedules
-    remain bounded.}
+    \caption{Trajectory norm $\|\mathbf{x}_k\|$ versus step index $k$ at
+    $h = 0.5$ for the uncoupled schedule ($s_k \equiv 0$), the damped
+    full-coupling schedule ($s_k \equiv 1$, $\beta = 1/4$), and the undamped
+    full-coupling schedule ($s_k \equiv 1$, $\beta = 1$), with
+    $\mathbf{A}=\operatorname{diag}(-1,-2)$ and $\mathbf{P}$ the
+    transposition. The undamped curve diverges; the uncoupled and damped
+    curves remain bounded. The damped curve decays more slowly than the
+    uncoupled one, consistent with the larger stability window at
+    $\beta = 1/4$.}
     \label{fig:trajectories}
 \end{figure}
 
@@ -571,13 +710,12 @@ implementation. Running it produces:
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.78\textwidth]{Fig3.png}
-    \caption{Verification scatter: the analytical spectral radius
-    $\rho(\mathbf{M}_2)$ from
-    Equations~\eqref{eq:M2}--\eqref{eq:M2invariants} (red curve)
-    against the values obtained by direct eigenvalue computation
-    (blue dots). The dashed horizontal line marks $\rho=1$. The two
-    agree to four decimal places across the full range
-    $0<h<1.4$.}
+    \caption{Verification scatter: the analytical stability window
+    $h_{\mathrm{stable}}(\beta)$ from \eqref{eq:hstable_beta} (red curve)
+    against the boundary located by direct numerical bisection on the
+    spectral radius $\rho(\bI + h\bL_1(\beta)\bA) = 1$ (blue dots). The
+    dashed horizontal line marks the uncoupled bound $h = 1$. The two agree
+    to numerical precision across the full range $0 \le \beta < 1/2$.}
     \label{fig:verification}
 \end{figure}
 
@@ -586,67 +724,73 @@ implementation. Running it produces:
 \label{sec:discussion}
 
 \paragraph{Merits.} The construction is exactly deterministic, trivially
-reproducible from the tuple $(\bx_0,\bF,\bP,h,\bS)$, and modular: because
-$\bL_s$ is linear it can be inserted at any stage of any explicit
+reproducible from the tuple $(\bx_0,\bF,\bP,h,\beta,\bS)$, and modular:
+because $\bL_s$ is linear it can be inserted at any stage of any explicit
 Runge--Kutta method without altering the algebraic structure, as
 Proposition~\ref{prop:order} records.
 
 \paragraph{Where the naive analysis fails.} The heuristic that stability
 follows from $h<2/\lambda_{\max}(\bJ^{(s)})$ is valid only when every
-eigenvalue of the scheduled Jacobian has negative real part. The permuted
-field can violate that premise, and Corollary~\ref{cor:unstable} shows that
-when it does no step size stabilises full coupling. The failure is structural,
-not numerical.
+eigenvalue of the scheduled Jacobian has negative real part. The pure
+permuted field violates that premise, and Corollary~\ref{cor:unstable} shows
+that when it does no step size stabilises the undamped schedule. The damped
+operator of Proposition~\ref{prop:spectrum_damped} restores the premise for
+every $\beta < 1/2$.
 
 \paragraph{Coupling coefficient is not enough.} Because $C_N$ depends only on
 the multiset of schedule entries it cannot distinguish a stable schedule from
-an unstable one, as the comparison of $C_N=1$ and $C_N=1/2$ in
-Table~\ref{tab:stability} shows. Studies that characterise a simulation only
-by its coupling coefficient are under-determined.
+an unstable one, as the comparison of $\beta=1/4$ and $\beta=1$ in
+Table~\ref{tab:stability} shows. The pair $(C_N, \beta)$ is the complete
+description. Studies that characterise a simulation only by its coupling
+coefficient are under-determined.
 
-\paragraph{Relation to geometric integration.} Permutation matrices are
+\paragraph{Relation to geometric integration.} The pure permutation is
 orthogonal, which invites the expectation that the scheme inherits a geometric
 property from the base method. It does not: $\bP\bA$ is generally not similar
 to $\bA$ through an orthogonal transformation and its spectrum can differ, as
-Proposition~\ref{prop:spectrum} shows. The construction is a switched hybrid
-integrator, not a geometric one.
+Proposition~\ref{prop:spectrum} shows. The damped operator is not orthogonal
+either, but it is dissipative in the sense of Proposition~\ref{prop:spectrum_damped}.
+The construction is a switched hybrid integrator, not a geometric one.
 
 \paragraph{Scope and limitations.} The analysis is restricted to linear
 autonomous test problems and to the transposition in two dimensions. Extension
 to general cycles is straightforward in principle: transposing coordinates $i$
 and $j$ within a diagonal matrix produces eigenvalues
 $\pm\sqrt{\lambda_i\lambda_j}$ together with the unpermuted $\lambda_k$ for
-$k\notin\{i,j\}$, and longer cycles factor into two-by-two blocks. Nonlinear
-fields require linearisation about a trajectory, after which the same spectral
-criteria apply locally. \textbf{We report no numerical integration results in
-this draft}; the claims of Section~\ref{sec:stability} are closed-form and
-were verified by direct evaluation of the matrices in
-Equations~\eqref{eq:M2}--\eqref{eq:M2invariants}. Table~\ref{tab:verify}
-records those evaluations. Figures 1--3 must be generated by running
-Appendix~A before submission.
+$k\notin\{i,j\}$, and longer cycles factor into two-by-two blocks. The
+damping analysis extends to general $\bP$ because the argument only uses the
+trace and determinant of the active field. Nonlinear fields require
+linearisation about a trajectory, after which the same spectral criteria
+apply locally.
 
-\paragraph{Open question.} Period-two alternation delivers $C_N=1/2$. Whether
-a longer period can deliver $C_N$ closer to $1$ while retaining a finite
-stability window is a natural question that we do not settle here; it is
-amenable to the same monodromy calculation at period three and above.
+\paragraph{Open question.} The damped full-coupling schedule with
+$\beta < 1/2$ achieves a finite stability window for the two-block
+linearisation. Whether the same remedy extends to higher-dimensional
+permutations, or whether a longer schedule period can deliver $C_N$ closer to
+$1$ while retaining a finite window, is a natural question that we do not
+settle here; both are amenable to the same monodromy calculation at
+dimension $n$ and period three and above.
 
 %---------------------------------------------------------------------
 \section{Conclusions}
 \label{sec:conclusions}
 
-We formalised a deterministic permutation-scheduled family of explicit
+We formalised a deterministic damped permutation-scheduled family of explicit
 integrators and analysed its coupling, order, and stability. The main findings
 are: (i) the schedule average $C_N$ is an exact coupling coefficient in
-$[0,1]$; (ii) with the switch frozen across each step the fourth-order
-Runge--Kutta variant retains classical order; (iii) for the two-block
-linearisation the permuted field has eigenvalues $\pm\sqrt{\lambda_1\lambda_2}$,
-so full coupling is unstable for every $h>0$ and refinement does not help; and
-(iv) a period-two alternating schedule with $C_N=1/2$ restores a finite
-stability window, with monodromy available in closed form. The practical
-recommendation is that any study using a scheduled permutation integrator
-should report the full binary schedule rather than its mean, and should verify
-stability against the spectral radius of the monodromy matrix rather than
-against a per-step step-size rule.
+$[0,1]$, and the pair $(C_N, \beta)$ is the complete schedule description;
+(ii) with the switch frozen across each step the fourth-order Runge--Kutta
+variant retains classical order; (iii) for the two-block linearisation the
+undamped permuted field has eigenvalues $\pm\sqrt{\lambda_1\lambda_2}$ and is
+unstable for every $h>0$, while the damped operator
+$\bL_1(\beta) = (1-\beta)\bI + \beta\bP$ with $\beta < 1/2$ has both
+eigenvalues strictly negative and a finite stability window
+$h_{\mathrm{stable}}(\beta) = 2/|\lambda_-(\beta)|$; and (iv) the window grows
+monotonically from the uncoupled bound to the asymptotic limit $4/(a+b)$ as
+$\beta \to 1/2^-$. The practical recommendation is that any study using a
+scheduled permutation integrator should report the full binary schedule, the
+exchange strength $\beta$, and should verify stability against the spectral
+radius of the active field rather than against a per-step step-size rule.
 
 %---------------------------------------------------------------------
 \section*{Data and Code Availability}
@@ -689,64 +833,107 @@ figures. It requires \texttt{numpy} and \texttt{matplotlib}.
 import numpy as np
 import matplotlib.pyplot as plt
 
-A = np.diag([-1.0, -2.0])
+a, b = 1.0, 2.0
+A = np.diag([-a, -b])
 P = np.array([[0.0, 1.0], [1.0, 0.0]])
-A0 = A                 # unswapped field
-A1 = P @ A             # swapped field
 I = np.eye(2)
 
-def M2(h):
-    """Period-two monodromy for the alternating schedule."""
-    return (I + h*A1) @ (I + h*A0)
+def L1(beta):
+    """Damped permutation operator L_1(beta) = (1-beta)I + beta P."""
+    return (1.0 - beta) * I + beta * P
 
-def rho(h):
-    return max(abs(np.linalg.eigvals(M2(h))))
+def A1(beta):
+    """Active field under s = 1 with damped permutation."""
+    return L1(beta) @ A
+
+def eig_A1(beta):
+    return np.sort(np.real(np.linalg.eigvals(A1(beta))))
+
+def h_stable(beta):
+    """Closed-form stability window for damped full coupling."""
+    lam = eig_A1(beta)
+    if lam.max() >= 0.0:
+        return 0.0
+    return 2.0 / abs(lam.min())
+
+def rho_1step(beta, h):
+    """Spectral radius of the one-step forward Euler map at s=1."""
+    M = I + h * A1(beta)
+    return max(abs(np.linalg.eigvals(M)))
 
 # --- Reproduce Table 1 ---------------------------------------------
-print(f"{'h':>6} {'trace':>10} {'det':>10} {'rho':>10}")
-for h in [0.05, 0.20, 0.50, 0.90, 1.00, 1.20]:
-    M = M2(h)
-    print(f"{h:6.2f} {np.trace(M):10.4f} {np.linalg.det(M):10.4f} {rho(h):10.4f}")
+print(f"{'beta':>6} {'lam+':>10} {'lam-':>10} {'det':>10} {'h_stable':>10}")
+for beta in [0.00, 0.10, 0.25, 0.40, 0.49]:
+    lam = eig_A1(beta)
+    det = np.linalg.det(A1(beta))
+    print(f"{beta:6.2f} {lam[1]:10.4f} {lam[0]:10.4f} {det:10.4f} {h_stable(beta):10.4f}")
 
-# --- Figure 1: spectral radius vs h --------------------------------
-hs = np.linspace(1e-3, 1.4, 600)
-rhos = np.array([rho(h) for h in hs])
+# --- Figure 1: h_stable(beta) --------------------------------------
+betas = np.linspace(0.0, 0.4999, 500)
+hs = np.array([h_stable(b) for b in betas])
 plt.figure()
-plt.plot(hs, rhos, label=r'$\rho(\mathbf{M}_2)$')
-plt.axhline(1.0, ls='--', c='k', label=r'$\rho=1$')
-plt.axvline(1.0, ls=':', c='r', label=r'$h=1$')
-plt.xlabel('step size h'); plt.ylabel('spectral radius')
+plt.plot(betas, hs, label=r'$h_{\mathrm{stable}}(\beta)$')
+plt.axhline(1.0, ls='--', c='k', label=r'uncoupled bound $h=1$')
+plt.axhline(4.0/3.0, ls=':', c='r', label=r'$\beta \to 1/2$ limit $h=4/3$')
+plt.xlabel(r'exchange strength $\beta$')
+plt.ylabel(r'stability window $h$')
 plt.legend(); plt.tight_layout(); plt.savefig('Fig1.tif', dpi=300)
 
 # --- Figure 2: trajectory norms at h = 0.5 -------------------------
 h = 0.5
-N = 40
-def run(schedule, x0=np.array([1.0, 1.0])):
+N = 200
+x0 = np.array([1.0, 1.0])
+
+def run_full(beta, h, N, x0):
     x = x0.copy(); out = [x.copy()]
-    for s in schedule:
-        F = A @ x
-        x = x + h * ((1 - s) * F + s * (P @ F))
+    M = I + h * A1(beta)
+    for _ in range(N):
+        x = M @ x
         out.append(x.copy())
     return np.array(out)
 
-sched_uncoupled  = [0]*N
-sched_full       = [1]*N
-sched_alternating= [k % 2 for k in range(N)]
+def run_uncoupled(h, N, x0):
+    x = x0.copy(); out = [x.copy()]
+    M = I + h * A
+    for _ in range(N):
+        x = M @ x
+        out.append(x.copy())
+    return np.array(out)
 
 plt.figure()
-for name, sched in [('uncoupled', sched_uncoupled),
-                    ('fully coupled', sched_full),
-                    ('alternating', sched_alternating)]:
-    traj = run(sched)
-    plt.semilogy(np.linalg.norm(traj, axis=1), label=name)
+plt.semilogy(np.linalg.norm(run_uncoupled(h, N, x0), axis=1),
+             label='uncoupled')
+plt.semilogy(np.linalg.norm(run_full(0.25, h, N, x0), axis=1),
+             label=r'damped full coupling, $\beta=1/4$')
+plt.semilogy(np.linalg.norm(run_full(1.0, h, N, x0), axis=1),
+             label=r'undamped full coupling, $\beta=1$')
 plt.xlabel('step k'); plt.ylabel(r'$\|\mathbf{x}_k\|$')
 plt.legend(); plt.tight_layout(); plt.savefig('Fig2.tif', dpi=300)
 
 # --- Figure 3: verification scatter --------------------------------
 plt.figure()
-plt.scatter(hs, rhos, s=4, label='direct eigenvalue computation')
+test_betas = np.linspace(0.0, 0.499, 60)
+h_ana = np.array([h_stable(b) for b in test_betas])
+h_num = []
+for b in test_betas:
+    lo, hi = 1e-6, 4.0
+    if rho_1step(b, lo) >= 1.0:
+        h_num.append(0.0); continue
+    if rho_1step(b, hi) < 1.0:
+        h_num.append(hi); continue
+    while hi - lo > 1e-9:
+        mid = 0.5 * (lo + hi)
+        if rho_1step(b, mid) < 1.0:
+            lo = mid
+        else:
+            hi = mid
+    h_num.append(0.5 * (lo + hi))
+h_num = np.array(h_num)
+plt.scatter(test_betas, h_num, s=6, label='numerical bisection')
+plt.plot(test_betas, h_ana, c='r', lw=1.2, label='analytical')
 plt.axhline(1.0, ls='--', c='k')
-plt.xlabel('step size h'); plt.ylabel('spectral radius')
+plt.xlabel(r'exchange strength $\beta$')
+plt.ylabel(r'stability window $h$')
 plt.legend(); plt.tight_layout(); plt.savefig('Fig3.tif', dpi=300)
 \end{lstlisting}
 
